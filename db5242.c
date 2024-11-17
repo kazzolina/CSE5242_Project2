@@ -15,7 +15,7 @@
 #include <immintrin.h>
 
 /* uncomment out the following DEBUG line for debug info, for experiment comment the DEBUG line  */
-// #define DEBUG
+#define DEBUG
 
 /* compare two int64_t values - for use with qsort */
 static int compare(const void *p1, const void *p2)
@@ -103,14 +103,24 @@ inline int64_t low_bin_nb_arithmetic(int64_t *data, int64_t size, int64_t target
    identify the first key in the range.
      (c) If the search key is bigger than all keys, it returns size.
   */
+
+  /*
+   - Specifically, the operators used by low bin nb arithmetic should only be the following: single equal “=”,
+   arithmetic operators, comparison operators, and bit-wise logical operators.
+
+   - Note that in C, a logic true or false can be treated as 1 or 0 integer.
+     ** You may use this integer to do some manipulation to avoid using branching statement.
+  */
+
   int64_t left = 0;
   int64_t right = size;
   int64_t mid;
 
   while (left < right)
   {
-
-    /* YOUR CODE HERE */
+    mid = (left + right) / 2; /* ignore possibility of overflow of left+right */
+    right = ((data[mid] >= target) * mid) + (!(data[mid] >= target) * right);
+    left = !(data[mid] >= target) * (mid + 1) + ((data[mid] >= target) * left);
   }
   return right;
 }
