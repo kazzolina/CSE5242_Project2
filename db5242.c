@@ -307,6 +307,30 @@ int64_t band_join(int64_t *inner, int64_t inner_size, int64_t *outer, int64_t ou
   */
 
   /* YOUR CODE HERE */
+
+    int64_t left = 0, right = inner_size;
+    int64_t mid;
+
+    while (left < right) {
+        mid = (left + right) / 2;
+        int64_t mask = -(inner[mid] >= *outer);
+        right = (mask & mid) | (~mask & right);
+        left = (mask & (mid + 1)) | (~mask & left);
+    }
+
+    *result_size = 0;
+    *bound = left;
+
+    for (int64_t i = *bound; i < inner_size && inner[i] <= *outer + *bound; i++) {
+        inner_results[*result_size] = i;
+        (*result_size)++;
+    }
+
+    for (int64_t i = 0; i < outer_size && *outer + *bound >= outer[i]; i++) {
+        outer_results[i] = i;
+    }
+
+    return *result_size;
 }
 
 int64_t band_join_simd(int64_t *inner, int64_t inner_size, int64_t *outer, int64_t outer_size, int64_t *inner_results, int64_t *outer_results, int64_t result_size, int64_t bound)
