@@ -363,29 +363,29 @@ int64_t band_join(int64_t *inner, int64_t inner_size, int64_t *outer, int64_t ou
 
   /* YOUR CODE HERE */
 
-  int64_t left = 0, right = inner_size;
-  int64_t mid;
+    int64_t left = 0, right = inner_size;
+    int64_t mid;
 
-  while (left < right) {
-      mid = (left + right) / 2;
-      int64_t mask = -(inner[mid] >= *outer);
-      right = (mask & mid) | (~mask & right);
-      left = (mask & (mid + 1)) | (~mask & left);
-  }
+    while (left < right) {
+        mid = (left + right) / 2;
+        int64_t mask = -(inner[mid] >= *outer);
+        right = (mask & mid) | (~mask & right);
+        left = (mask & (mid + 1)) | (~mask & left);
+    }
 
-  *result_size = 0;
-  *bound = left;
+    *result_size = 0;
+    *bound = left;
 
-  for (int64_t i = *bound; i < inner_size && inner[i] <= *outer + *bound; i++) {
-      inner_results[*result_size] = i;
-      (*result_size)++;
-  }
+    for (int64_t i = *bound; i < inner_size && inner[i] <= *outer + *bound; i++) {
+        inner_results[*result_size] = i;
+        (*result_size)++;
+    }
 
-  for (int64_t i = 0; i < outer_size && *outer + *bound >= outer[i]; i++) {
-      outer_results[i] = i;
-  }
+    for (int64_t i = 0; i < outer_size && *outer + *bound >= outer[i]; i++) {
+        outer_results[i] = i;
+    }
 
-  return *result_size;
+    return *result_size;
 }
 
 int64_t band_join_simd(int64_t *inner, int64_t inner_size, int64_t *outer, int64_t outer_size, int64_t *inner_results, int64_t *outer_results, int64_t result_size, int64_t bound)
@@ -409,27 +409,27 @@ int64_t band_join_simd(int64_t *inner, int64_t inner_size, int64_t *outer, int64
 
   /* YOUR CODE HERE */
     
-  // Iterate over outer array (C.request)
-  for (int i = 0; i < outer_size; i++) {
-      int lower_bound = outer[i] - threshold;
-      int upper_bound = outer[i] + threshold;
+    // Iterate over outer array (C.request)
+    for (int i = 0; i < outer_size; i++) {
+        int lower_bound = outer[i] - threshold;
+        int upper_bound = outer[i] + threshold;
 
-      // Use low_bin_nb_mask to find matching indices
-      int matches[inner_size];  // Buffer to store matched indices temporarily
-      int match_count = low_bin_nb_mask(inner, inner_size, lower_bound, upper_bound, matches);
+        // Use low_bin_nb_mask to find matching indices
+        int matches[inner_size];  // Buffer to store matched indices temporarily
+        int match_count = low_bin_nb_mask(inner, inner_size, lower_bound, upper_bound, matches);
 
-      // Store results if within result size limit
-      for (int j = 0; j < match_count && result_count < result_size; j++) {
-          inner_results[result_count] = matches[j];
-          outer_results[result_count] = i;  // Index of the current outer element
-          result_count++;
-      }
+        // Store results if within result size limit
+        for (int j = 0; j < match_count && result_count < result_size; j++) {
+            inner_results[result_count] = matches[j];
+            outer_results[result_count] = i;  // Index of the current outer element
+            result_count++;
+        }
 
-      // Stop if we've hit the result limit
-      if (result_count >= result_size) {
-          break;
-      }
-  }
+        // Stop if we've hit the result limit
+        if (result_count >= result_size) {
+            break;
+        }
+    }
 }
 
 int main(int argc, char *argv[])
