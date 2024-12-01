@@ -376,7 +376,6 @@ int64_t band_join_simd(int64_t *inner, int64_t inner_size, int64_t *outer, int64
         }
     }
 }
-}
 
 int main(int argc, char *argv[])
 {
