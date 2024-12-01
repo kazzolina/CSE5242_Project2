@@ -353,6 +353,29 @@ int64_t band_join_simd(int64_t *inner, int64_t inner_size, int64_t *outer, int64
   */
 
   /* YOUR CODE HERE */
+    
+    // Iterate over outer array (C.request)
+    for (int i = 0; i < outer_size; i++) {
+        int lower_bound = outer[i] - threshold;
+        int upper_bound = outer[i] + threshold;
+
+        // Use low_bin_nb_mask to find matching indices
+        int matches[inner_size];  // Buffer to store matched indices temporarily
+        int match_count = low_bin_nb_mask(inner, inner_size, lower_bound, upper_bound, matches);
+
+        // Store results if within result size limit
+        for (int j = 0; j < match_count && result_count < result_size; j++) {
+            inner_result[result_count] = matches[j];
+            outer_result[result_count] = i;  // Index of the current outer element
+            result_count++;
+        }
+
+        // Stop if we've hit the result limit
+        if (result_count >= result_size) {
+            break;
+        }
+    }
+}
 }
 
 int main(int argc, char *argv[])
