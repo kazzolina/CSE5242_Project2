@@ -380,16 +380,14 @@ int64_t band_join(int64_t *inner, int64_t inner_size, int64_t *outer, int64_t ou
   // int64_t lower_bounds[4], upper_bounds[4];
   // int64_t lower_idxs[4], upper_idxs[4];
 
-  // Process 4 outer records at a time using low_bin_nb_4x
-  for (i; i + 4 <= outer_size && count < result_size; i += 4)
-  {
-    // Load 4 probe values
-    for (int j = 0; j < 4; ++j)
-    {
-      targets[j] = outer[i + j];
-      lower_bounds[j] = targets[j] - bound;
-      upper_bounds[j] = targets[j] + bound + 1;
-    }
+    // Process 4 outer records in parallel using low_bin_nb_4x
+    for (i; i + 4 <= outer_size && count < result_size; i += 4) {
+        // Load 4 probe values
+        for (int j = 0; j < 4; ++j) {
+            targets[j] = outer[i + j];
+            lower_bounds[j] = targets[j] - bound;
+            upper_bounds[j] = targets[j] + bound + 1;
+        }
 
     // Use low_bin_nb_4x to find the indices for upper and lower bounds
     low_bin_nb_4x(inner, inner_size, lower_bounds, lower_idxs);
@@ -413,13 +411,11 @@ int64_t band_join(int64_t *inner, int64_t inner_size, int64_t *outer, int64_t ou
     }
   }
 
-  // Handle the remaining records using low_bin_nb_mask
-  for (i; i < outer_size && count < result_size; ++i)
-  {
-    printf("419\n");
-    int64_t probe = outer[i];
-    int64_t lower_bound = probe - bound;
-    int64_t upper_bound = probe + bound;
+    // Handle the remainder records using low_bin_nb_mask
+    for (i; i < outer_size && count < result_size; ++i) {
+        int64_t probe = outer[i];
+        int64_t lower_bound = probe - bound;
+        int64_t upper_bound = probe + bound;
 
     // Use low_bin_nb_mask to find indices for lower and upper bounds
     int64_t lower_idx = low_bin_nb_mask(inner, inner_size, lower_bound);
@@ -500,12 +496,11 @@ int64_t band_join_simd(int64_t *inner, int64_t inner_size, int64_t *outer, int64
     }
   }
 
-  // Handle the remaining records using low_bin_nb_mask
-  for (i; i < outer_size && count < result_size; ++i)
-  {
-    int64_t probe = outer[i];
-    int64_t lower_bound = probe - bound;
-    int64_t upper_bound = probe + bound;
+    // Handle remainder records using low_bin_nb_mask
+    for (i; i < outer_size && count < result_size; ++i) {
+        int64_t probe = outer[i];
+        int64_t lower_bound = probe - bound;
+        int64_t upper_bound = probe + bound;
 
     // Use low_bin_nb_mask to find the lower and upper bounds
     int64_t lower_idx = low_bin_nb_mask(inner, inner_size, lower_bound);
