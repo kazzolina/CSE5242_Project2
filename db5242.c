@@ -165,33 +165,37 @@ inline void low_bin_nb_4x(int64_t *data, int64_t size, int64_t *targets, int64_t
      Note that we're using the result array as the "right" elements in the search so no need for a return statement
   */
 
-  /* YOUR CODE HERE */
-    int64_t *left = {0, 0, 0, 0};  // Lower bounds for the 4 searches
-  for (int i = 0; i < 4; i++) {
+  int64_t *left = malloc(4 * sizeof(int64_t)); // Lower bounds for the 4 searches
+  for (int i = 0; i < 4; i++)
+  {
     right[i] = size;
-}
+    left[i] = 0;
+  }
 
-  while (left[0] < right[0] || left[1] < right[1] || left[2] < right[2] || left[3] < right[3]) {
+  while (left[0] < right[0] || left[1] < right[1] || left[2] < right[2] || left[3] < right[3])
+  {
     int64_t mid[4] = {
         left[0] + ((right[0] - left[0]) >> 1),
         left[1] + ((right[1] - left[1]) >> 1),
         left[2] + ((right[2] - left[2]) >> 1),
-        left[3] + ((right[3] - left[3]) >> 1)
-    };
+        left[3] + ((right[3] - left[3]) >> 1)};
 
     // Check the mid values against targets
-    for (int i = 0; i < 4; i++) {
-        if (left[i] < right[i]) {
-            int mask = (data[mid[i]] >= targets[i]) ? 1 : 0;
-            right[i] = mask ? mid[i] : right[i];
-            left[i] = mask ? left[i] : mid[i] + 1;
-        }
+    for (int i = 0; i < 4; i++)
+    {
+      if (left[i] < right[i])
+      {
+        int mask = (data[mid[i]] >= targets[i]) ? 1 : 0;
+        right[i] = mask ? mid[i] : right[i];
+        left[i] = mask ? left[i] : mid[i] + 1;
+      }
     }
   }
 
   // Assign results to the output array
-  for (int i = 0; i < 4; i++) {
-      right[i] = left[i];
+  for (int i = 0; i < 4; i++)
+  {
+    right[i] = left[i];
   }
 }
 
@@ -245,30 +249,32 @@ inline void low_bin_nb_simd(int64_t *data, int64_t size, __m256i target, __m256i
   */
 
   /* YOUR CODE HERE */
-  __m256i low = _mm256_set1_epi64x(0);          // All low values start at 0
-  __m256i high = _mm256_set1_epi64x(size);      // All high values start at size
+  __m256i low = _mm256_set1_epi64x(0);     // All low values start at 0
+  __m256i high = _mm256_set1_epi64x(size); // All high values start at size
 
   // Loop until convergence
-  while (1) {
-      // Calculate midpoints: mid = low + ((high - low) / 2)
-      __m256i diff = _mm256_sub_epi64(high, low);
-      __m256i mid = _mm256_add_epi64(low, _mm256_srli_epi64(diff, 1));
+  while (1)
+  {
+    // Calculate midpoints: mid = low + ((high - low) / 2)
+    __m256i diff = _mm256_sub_epi64(high, low);
+    __m256i mid = _mm256_add_epi64(low, _mm256_srli_epi64(diff, 1));
 
-      // Gather elements from the data array at indices specified by 'mid'
-      __m256i mid_values = _mm256_i64gather_epi64(data, mid, 8);
+    // Gather elements from the data array at indices specified by 'mid'
+    __m256i mid_values = _mm256_i64gather_epi64(data, mid, 8);
 
-      // Compare mid_values with target
-      __m256i mask = _mm256_cmpgt_epi64(target, mid_values);  // mask = target > mid_values
+    // Compare mid_values with target
+    __m256i mask = _mm256_cmpgt_epi64(target, mid_values); // mask = target > mid_values
 
-      // Update low and high bounds using blend operations
-      low = _mm256_blendv_epi8(low, _mm256_add_epi64(mid, _mm256_set1_epi64x(1)), mask);
-      high = _mm256_blendv_epi8(mid, high, mask);
+    // Update low and high bounds using blend operations
+    low = _mm256_blendv_epi8(low, _mm256_add_epi64(mid, _mm256_set1_epi64x(1)), mask);
+    high = _mm256_blendv_epi8(mid, high, mask);
 
-      // Check if the search has converged
-      __m256i converged = _mm256_cmpeq_epi64(low, high);
-      if (_mm256_testc_si256(converged, _mm256_set1_epi64x(-1))) {
-          break;  // Exit when all searches converge
-      }
+    // Check if the search has converged
+    __m256i converged = _mm256_cmpeq_epi64(low, high);
+    if (_mm256_testc_si256(converged, _mm256_set1_epi64x(-1)))
+    {
+      break; // Exit when all searches converge
+    }
   }
 
   // Store the results into the result vector
@@ -294,8 +300,8 @@ void bulk_bin_search(int64_t *data, int64_t size, int64_t *searchkeys, int64_t n
 
       // Uncomment one of the following to measure it
       results[i] = low_bin_search(data, size, searchkeys[i]);
-      // results[i] = low_bin_nb_arithmetic(data,size,searchkeys[i]);
-      // results[i] = low_bin_nb_mask(data,size,searchkeys[i]);
+      // results[i] = low_bin_nb_arithmetic(data, size, searchkeys[i]);
+      // results[i] = low_bin_nb_mask(data, size, searchkeys[i]);
 
 #ifdef DEBUG
       printf("Result is %ld\n", results[i]);
@@ -332,7 +338,7 @@ void bulk_bin_search_4x(int64_t *data, int64_t size, int64_t *searchkeys, int64_
 
       // Algorithm B
       // searchkey_4x = _mm256_loadu_si256((__m256i *)&searchkeys[i]);
-      // low_bin_nb_simd(data,size,searchkey_4x,(__m256i *)&results[i]);
+      // low_bin_nb_simd(data, size, searchkey_4x, (__m256i *)&results[i]);
 
 #ifdef DEBUG
       printf("Result is %ld %ld %ld %ld  ...\n",
@@ -361,62 +367,75 @@ int64_t band_join(int64_t *inner, int64_t inner_size, int64_t *outer, int64_t ou
 
   */
 
-  /* YOUR CODE HERE */
+  int64_t count = 0;
 
-    int64_t count = 0;  
+  int64_t i = 0;
+  int64_t *targets = malloc(4 * sizeof(int64_t));
+  int64_t *lower_bounds = malloc(4 * sizeof(int64_t));
+  int64_t *upper_bounds = malloc(4 * sizeof(int64_t));
+  int64_t *lower_idxs = malloc(4 * sizeof(int64_t));
+  int64_t *upper_idxs = malloc(4 * sizeof(int64_t));
 
-    int64_t i = 0;
-    int64_t targets[4];
-    int64_t lower_bounds[4], upper_bounds[4];
-    int64_t lower_idxs[4], upper_idxs[4];
+  // int64_t targets[4];
+  // int64_t lower_bounds[4], upper_bounds[4];
+  // int64_t lower_idxs[4], upper_idxs[4];
 
-    // Process 4 outer records at a time using low_bin_nb_4x
-    for (i; i + 4 <= outer_size && count < result_size; i += 4) {
-        // Load 4 probe values
-        for (int j = 0; j < 4; ++j) {
-            targets[j] = outer[i + j];
-            lower_bounds[j] = targets[j] - bound;
-            upper_bounds[j] = targets[j] + bound + 1;
-        }
-
-        // Use low_bin_nb_4x to find the indices for upper and lower bounds
-        low_bin_nb_4x(inner, inner_size, lower_bounds, lower_idxs);
-        low_bin_nb_4x(inner, inner_size, upper_bounds, upper_idxs);
-
-        // Iterate over the results for each of the 4 probes
-        for (int j = 0; j < 4; ++j) {
-            for (int64_t k = lower_idxs[j]; k < upper_idxs[j] && count < result_size; ++k) {
-                inner_results[count] = k;
-                outer_results[count] = i + j;
-                ++count;
-            }
-
-            // If result_size limit is reached, exit early
-            if (count >= result_size) {
-                return count;
-            }
-        }
+  // Process 4 outer records at a time using low_bin_nb_4x
+  for (i; i + 4 <= outer_size && count < result_size; i += 4)
+  {
+    // Load 4 probe values
+    for (int j = 0; j < 4; ++j)
+    {
+      targets[j] = outer[i + j];
+      lower_bounds[j] = targets[j] - bound;
+      upper_bounds[j] = targets[j] + bound + 1;
     }
 
-    // Handle the remaining records using low_bin_nb_mask
-    for (i; i < outer_size && count < result_size; ++i) {
-        int64_t probe = outer[i];
-        int64_t lower_bound = probe - bound;
-        int64_t upper_bound = probe + bound;
+    // Use low_bin_nb_4x to find the indices for upper and lower bounds
+    low_bin_nb_4x(inner, inner_size, lower_bounds, lower_idxs);
+    low_bin_nb_4x(inner, inner_size, upper_bounds, upper_idxs);
 
-        // Use low_bin_nb_mask to find indices for lower and upper bounds
-        int64_t lower_idx = low_bin_nb_mask(inner, inner_size, lower_bound);
-        int64_t upper_idx = low_bin_nb_mask(inner, inner_size, upper_bound + 1);
+    // Iterate over the results for each of the 4 probes
+    for (int j = 0; j < 4; ++j)
+    {
+      for (int64_t k = lower_idxs[j]; k < upper_idxs[j] && count < result_size; ++k)
+      {
+        inner_results[count] = k;
+        outer_results[count] = i + j;
+        ++count;
+      }
 
-        // Store matching results
-        for (int64_t k = lower_idx; k < upper_idx && count < result_size; ++k) {
-            inner_results[count] = k;
-            outer_results[count] = i;
-            ++count;
-        }
+      // If result_size limit is reached, exit early
+      if (count >= result_size)
+      {
+        return count;
+      }
     }
+  }
 
-    return count;
+  // Handle the remaining records using low_bin_nb_mask
+  for (i; i < outer_size && count < result_size; ++i)
+  {
+    printf("419\n");
+    int64_t probe = outer[i];
+    int64_t lower_bound = probe - bound;
+    int64_t upper_bound = probe + bound;
+
+    // Use low_bin_nb_mask to find indices for lower and upper bounds
+    int64_t lower_idx = low_bin_nb_mask(inner, inner_size, lower_bound);
+    int64_t upper_idx = low_bin_nb_mask(inner, inner_size, upper_bound + 1);
+
+    // Store matching results
+    for (int64_t k = lower_idx; k < upper_idx && count < result_size; ++k)
+    {
+      printf("431\n");
+      inner_results[count] = k;
+      outer_results[count] = i;
+      ++count;
+    }
+  }
+
+  return count;
 }
 
 int64_t band_join_simd(int64_t *inner, int64_t inner_size, int64_t *outer, int64_t outer_size, int64_t *inner_results, int64_t *outer_results, int64_t result_size, int64_t bound)
@@ -438,67 +457,70 @@ int64_t band_join_simd(int64_t *inner, int64_t inner_size, int64_t *outer, int64
      This inner scanning code does not have to use SIMD.
   */
 
-  /* YOUR CODE HERE */
-    
   // Iterate over outer array (C.request)
 
-    int64_t count = 0; 
+  int64_t count = 0;
 
-    int64_t i = 0;
+  int64_t i = 0;
 
-    for (i; i + 4 <= outer_size && count < result_size; i += 4) {
-        // Load 4 probe values
-        __m256i target = _mm256_set_epi64x(outer[i + 3], outer[i + 2], outer[i + 1], outer[i]);
+  for (i; i + 4 <= outer_size && count < result_size; i += 4)
+  {
+    // Load 4 probe values
+    __m256i target = _mm256_set_epi64x(outer[i + 3], outer[i + 2], outer[i + 1], outer[i]);
 
-        // Calculate lower and upper bounds for SIMD
-        __m256i lower_bound = _mm256_sub_epi64(target, _mm256_set1_epi64x(bound));
-        __m256i upper_bound = _mm256_add_epi64(target, _mm256_set1_epi64x(bound + 1));
+    // Calculate lower and upper bounds for SIMD
+    __m256i lower_bound = _mm256_sub_epi64(target, _mm256_set1_epi64x(bound));
+    __m256i upper_bound = _mm256_add_epi64(target, _mm256_set1_epi64x(bound + 1));
 
-        // Use low_bin_nb_simd to find the lower and upper bounds
-        __m256i lower_idx, upper_idx;
-        low_bin_nb_simd(inner, inner_size, lower_bound, &lower_idx);
-        low_bin_nb_simd(inner, inner_size, upper_bound, &upper_idx);
+    // Use low_bin_nb_simd to find the lower and upper bounds
+    __m256i lower_idx, upper_idx;
+    low_bin_nb_simd(inner, inner_size, lower_bound, &lower_idx);
+    low_bin_nb_simd(inner, inner_size, upper_bound, &upper_idx);
 
-        // Extract the indices from SIMD registers and process matches
-        int64_t lower_indices[4], upper_indices[4];
-        _mm256_storeu_si256((__m256i *)lower_indices, lower_idx);
-        _mm256_storeu_si256((__m256i *)upper_indices, upper_idx);
+    // Extract the indices from SIMD registers and process matches
+    int64_t lower_indices[4], upper_indices[4];
+    _mm256_storeu_si256((__m256i *)lower_indices, lower_idx);
+    _mm256_storeu_si256((__m256i *)upper_indices, upper_idx);
 
-        // Process results for each of the 4 probes
-        for (int j = 0; j < 4; ++j) {
-            for (int64_t k = lower_indices[j]; k < upper_indices[j] && count < result_size; ++k) {
-                inner_results[count] = k;
-                outer_results[count] = i + j;
-                ++count;
-            }
+    // Process results for each of the 4 probes
+    for (int j = 0; j < 4; ++j)
+    {
+      for (int64_t k = lower_indices[j]; k < upper_indices[j] && count < result_size; ++k)
+      {
+        inner_results[count] = k;
+        outer_results[count] = i + j;
+        ++count;
+      }
 
-            // Stop if we reach the maximum result size
-            if (count >= result_size) {
-                return count;
-            }
-        }
+      // Stop if we reach the maximum result size
+      if (count >= result_size)
+      {
+        return count;
+      }
     }
+  }
 
-    // Handle the remaining records using low_bin_nb_mask
-    for (i; i < outer_size && count < result_size; ++i) {
-        int64_t probe = outer[i];
-        int64_t lower_bound = probe - bound;
-        int64_t upper_bound = probe + bound;
+  // Handle the remaining records using low_bin_nb_mask
+  for (i; i < outer_size && count < result_size; ++i)
+  {
+    int64_t probe = outer[i];
+    int64_t lower_bound = probe - bound;
+    int64_t upper_bound = probe + bound;
 
-        // Use low_bin_nb_mask to find the lower and upper bounds
-        int64_t lower_idx = low_bin_nb_mask(inner, inner_size, lower_bound);
-        int64_t upper_idx = low_bin_nb_mask(inner, inner_size, upper_bound + 1);
+    // Use low_bin_nb_mask to find the lower and upper bounds
+    int64_t lower_idx = low_bin_nb_mask(inner, inner_size, lower_bound);
+    int64_t upper_idx = low_bin_nb_mask(inner, inner_size, upper_bound + 1);
 
-        // Store matching results
-        for (int64_t k = lower_idx; k < upper_idx && count < result_size; ++k) {
-            inner_results[count] = k;
-            outer_results[count] = i;
-            ++count;
-        }
+    // Store matching results
+    for (int64_t k = lower_idx; k < upper_idx && count < result_size; ++k)
+    {
+      inner_results[count] = k;
+      outer_results[count] = i;
+      ++count;
     }
+  }
 
-    return count;
- 
+  return count;
 }
 
 int main(int argc, char *argv[])
