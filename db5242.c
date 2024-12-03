@@ -370,7 +370,7 @@ int64_t band_join(int64_t *inner, int64_t inner_size, int64_t *outer, int64_t ou
     int64_t lower_bounds[4], upper_bounds[4];
     int64_t lower_idxs[4], upper_idxs[4];
 
-    // Process 4 outer records at a time using low_bin_nb_4x
+    // Process 4 outer records in parallel using low_bin_nb_4x
     for (i; i + 4 <= outer_size && count < result_size; i += 4) {
         // Load 4 probe values
         for (int j = 0; j < 4; ++j) {
@@ -398,7 +398,7 @@ int64_t band_join(int64_t *inner, int64_t inner_size, int64_t *outer, int64_t ou
         }
     }
 
-    // Handle the remaining records using low_bin_nb_mask
+    // Handle the remainder records using low_bin_nb_mask
     for (i; i < outer_size && count < result_size; ++i) {
         int64_t probe = outer[i];
         int64_t lower_bound = probe - bound;
@@ -479,7 +479,7 @@ int64_t band_join_simd(int64_t *inner, int64_t inner_size, int64_t *outer, int64
         }
     }
 
-    // Handle the remaining records using low_bin_nb_mask
+    // Handle remainder records using low_bin_nb_mask
     for (i; i < outer_size && count < result_size; ++i) {
         int64_t probe = outer[i];
         int64_t lower_bound = probe - bound;
