@@ -27,7 +27,23 @@
 
 Use **`./db5242 N X Y Z R`** to measure `bulk_bin_search` and `bulk_bin_search_4x` functions. In order to test that correctly, you will need to uncomment the code that you want to measure within `bulk_bin_search` and `bulk_bin_search_4x`
 
-        Lines ...
+**bulk_bin_search**
+
+    // Uncomment one of the following to measure it
+    results[i] = low_bin_search(data, size, searchkeys[i]);
+    // results[i] = low_bin_nb_arithmetic(data, size, searchkeys[i]);
+    // results[i] = low_bin_nb_mask(data, size, searchkeys[i]);
+
+**bulk_bin_search_4x**
+
+    // Uncomment one of the following depending on which routine you want to profile
+
+    // Algorithm A
+    low_bin_nb_4x(data, size, &searchkeys[i], &results[i]);
+
+    // Algorithm B
+    // searchkey_4x = _mm256_loadu_si256((__m256i *)&searchkeys[i]);
+    // low_bin_nb_simd(data, size, searchkey_4x, (__m256i *)&results[i]);
 
 **`N`:** number of elements in the array being searched (same as the number of probes) *varies from 10 to 10^7*
 
